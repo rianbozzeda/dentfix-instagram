@@ -171,6 +171,40 @@ def festive_ano(name,kicker,text):
     white_text(d,M,760,wrap(d,text,font('Regular',50),W-2*M),font('Regular',50),(255,255,255),72)
     footer(img,d); img.save(os.path.join(OUT,name))
 
+
+# ---------- Stories (1080x1920) com a arte do feed ----------
+def story_from_feed(feed_png, out_png, pill="NOVO NO FEED", bottom="Toque no perfil e veja o post completo"):
+    SW,SH=1080,1920
+    img=gradient((121,163,97),(43,116,156),SH) if False else Image.new('RGB',(SW,SH))
+    g=ImageDraw.Draw(img)
+    top=(121,163,97); bot=(43,116,156)
+    for y in range(SH):
+        t=y/(SH-1); g.line([(0,y),(SW,y)],fill=tuple(int(top[i]+(bot[i]-top[i])*t) for i in range(3)))
+    # feed image, scaled, rounded, with soft shadow (safe zone: y 250..1670)
+    fw=800; fh=1000
+    art=Image.open(feed_png).convert('RGB').resize((fw,fh),Image.LANCZOS)
+    x0=(SW-fw)//2; y0=470
+    sh=Image.new('RGBA',(SW,SH),(0,0,0,0)); sd=ImageDraw.Draw(sh)
+    sd.rounded_rectangle([x0+8,y0+16,x0+fw+8,y0+fh+16],radius=36,fill=(0,0,0,70))
+    img=Image.alpha_composite(img.convert('RGBA'),sh).convert('RGB')
+    mask=Image.new('L',(fw,fh),0); ImageDraw.Draw(mask).rounded_rectangle([0,0,fw,fh],radius=32,fill=255)
+    img.paste(art,(x0,y0),mask)
+    g=ImageDraw.Draw(img)
+    pf=font('Bold',44); tw=g.textlength(pill,font=pf)
+    pw=int(tw+90); px=(SW-pw)//2
+    g.rounded_rectangle([px,300,px+pw,390],radius=45,fill=(255,255,255))
+    g.text((px+45,318),pill,font=pf,fill=GREEN)
+    bf=font('SemiBold',42)
+    for i,l in enumerate(wrap(g,bottom,bf,SW-160)):
+        lw=g.textlength(l,font=bf); g.text(((SW-lw)/2,1520+i*58),l,font=bf,fill=(255,255,255))
+    img.save(out_png)
+
+def stories():
+    d=os.path.join(OUT,'stories'); os.makedirs(d,exist_ok=True)
+    for f in sorted(os.listdir(OUT)):
+        if f.endswith('.png'):
+            story_from_feed(os.path.join(OUT,f),os.path.join(d,f.replace('.png','-story.png')))
+
 def dezembro():
     tips('2026-12-01-consultas-fim-de-ano.png','Antes do recesso',['Agende suas consultas','de fim de ano'],
          [('Consulta de rotina e limpeza','um bom começo para o seu sorriso'),
@@ -198,3 +232,4 @@ def dezembro():
 
 if __name__=='__main__':
     dezembro()
+    stories()
